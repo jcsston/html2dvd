@@ -1,10 +1,6 @@
 
 //#include "HTML2DVDImages.h"
 
-/*#include "welcome_page.xpm"
-#include "html_page.xpm"
-#include "dvd_page.xpm"
-#include "finish_page.xpm"*/
 #include "welcome_page_png.c"
 #include "html_page_png.c"
 #include "dvd_page_png.c"
