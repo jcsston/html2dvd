@@ -4,6 +4,9 @@
 
 #include "wxHTMLBitmapRenderer.h"
 
+#include <wx/arrimpl.cpp>
+WX_DEFINE_OBJARRAY(wxHtmlLinkInfoArray);
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -42,12 +45,26 @@ void wxHTMLBitmapRenderer::SetHtmlFile(const wxString& filename)
 		delete m_Cells;
 
 	wxFile htmlFile;		
-	htmlFile.Open(filename, wxFile::read);		
+	wxFileSystem fs;
+	wxFSFile *fsFile;
+	fsFile = fs.OpenFile(filename);
 	
-	if (htmlFile.IsOpened()) {
-		char *buffer = new char[htmlFile.Length()+1];
-		memset(buffer, 0, htmlFile.Length()+1);
-		htmlFile.Read(buffer, htmlFile.Length());
+	if (fsFile != NULL) {
+		wxInputStream *in;
+		char *buffer;
+		long len;
+		
+		in = fsFile->GetStream();
+		wxCHECK_RET(in != NULL, wxT("Failed to get wxInputStream pointer from wxFSFile."));
+
+		len = in->GetSize();
+		wxASSERT(len != (~(size_t)0));
+				
+		buffer = new char[len+1];
+		memset(buffer, 0, len+1);
+
+		in->Read(buffer, len);
+		
 		html = wxString(buffer, wxConvUTF8);
 		delete [] buffer;
 		buffer = NULL;	
@@ -82,15 +99,22 @@ wxBitmap &wxHTMLBitmapRenderer::Render()
 	m_DC.DrawRectangle(0, 0, m_Width, m_Height);
 
   m_DC.SetClippingRegion(0, 0, m_Width, m_Height);
-  m_Cells->Draw(m_DC, 0, 0, 0, m_Height);
+	wxHtmlRenderingInfo info;
+  m_Cells->Draw(m_DC, 0, 0, 0, m_Height, info);
+	//m_Cells->Draw(m_DC, 0, 0, 0, m_Height);
   m_DC.DestroyClippingRegion();
 
 	m_DC.SelectObject(wxNullBitmap);
 
+	m_Links.Clear();
+	
 	// Draw hyperlink mask
-	wxHtmlCell* cell = m_Cells->GetFirstCell();
+	ScanNestedHTMLLinks(m_Cells->GetFirstChild());
+	/*wxHtmlCell* cell = m_Cells->GetFirstChild();
+	wxHtmlContainerCell *pCell = dynamic_cast<wxHtmlContainerCell *>(cell);
 	
 	while (cell != NULL) {
+		pCell = dynamic_cast<wxHtmlContainerCell *>(cell);//wxDynamicCast(cell, wxHtmlContainerCell);
 		DVDMenuButton button;
 		button.x = cell->GetPosX();
 		button.y = cell->GetPosY();
@@ -103,7 +127,27 @@ wxBitmap &wxHTMLBitmapRenderer::Render()
 		}
 
 		cell = cell->GetNext();
-	}
+	}*/
 
 	return m_Bitmap;
+}
+
+void wxHTMLBitmapRenderer::ScanNestedHTMLLinks(wxHtmlCell *cell)
+{
+	while (cell != NULL) {
+		DVDMenuButton button;
+		button.x = cell->GetPosX();
+		button.y = cell->GetPosY();
+		button.width = cell->GetWidth();
+		button.height = cell->GetHeight();
+		wxHtmlLinkInfo* cellLink = cell->GetLink();
+		if (cellLink != NULL) {
+			button.target = cellLink->GetHref();
+			m_Buttons.Add(button);
+		}
+
+		ScanNestedHTMLLinks(cell->GetFirstChild());
+
+		cell = cell->GetNext();
+	}
 }

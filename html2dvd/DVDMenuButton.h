@@ -42,6 +42,7 @@ public:
 
 	void DrawUpButton(const wxString &href);
 	void DrawDownButton(const wxString &href);
+	void DrawButtonOutline(DVDMenuButton &button);
 	wxImage GetHighlightMask();
 	wxImage GetSelectionMask();
 

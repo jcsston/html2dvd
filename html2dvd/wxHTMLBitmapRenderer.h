@@ -22,6 +22,8 @@
 
 #include "DVDMenuButton.h"
 
+WX_DECLARE_OBJARRAY(wxHtmlLinkInfo, wxHtmlLinkInfoArray);
+
 class wxHTMLBitmapRenderer : public wxObject  
 {
 public:
@@ -40,13 +42,15 @@ public:
 	DVDMenuButtons &GetDVDButtons() { return m_Buttons; };
 
 protected:		
+	void ScanNestedHTMLLinks(wxHtmlCell *cell);
 	DVDMenuButtons m_Buttons;
-    wxMemoryDC m_DC;
-		wxBitmap m_Bitmap;
-    wxHtmlWinParser *m_Parser;
-    wxFileSystem *m_FS;
-    wxHtmlContainerCell *m_Cells;
-    int m_MaxWidth, m_Width, m_Height;
+  wxMemoryDC m_DC;
+	wxBitmap m_Bitmap;
+	wxHtmlLinkInfoArray m_Links;
+  wxHtmlWinParser *m_Parser;
+  wxFileSystem *m_FS;
+  wxHtmlContainerCell *m_Cells;
+  int m_MaxWidth, m_Width, m_Height;
 };
 
 #endif // !defined(AFX_WXHTMLBITMAPRENDERER_H__8C6DA4D9_DDAD_4100_A483_5A4AABAD0F4E__INCLUDED_)

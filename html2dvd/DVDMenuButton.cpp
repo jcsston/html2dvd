@@ -218,6 +218,56 @@ void DVDMenuPage::DrawDownButton(const wxString &href)
 	buttons.Add(button);
 }
 
+void DVDMenuPage::DrawButtonOutline(DVDMenuButton &button)
+{
+	long buttonOutlineWidth = g_configuration->Read(wxT("Button Outline Width"), 4);
+
+	wxMemoryDC memoryDC;
+
+	wxCHECK_RET(title.Ok(), wxT("Invalid title bitmap."));
+
+	memoryDC.SelectObject(title);
+	
+	// Draw the down button
+	memoryDC.SetPen(wxPen(*wxRED, buttonOutlineWidth, wxSOLID));
+	memoryDC.SetBrush(*wxTRANSPARENT_BRUSH);			
+
+	int x1 = 0;
+	int y1 = 0;
+	wxCoord buttonWidth = 0;
+	wxCoord buttonHeight = 0;
+	
+	x1 = button.x;
+	y1 = button.y;
+	buttonWidth = button.width;
+	buttonHeight = button.height;
+		
+	memoryDC.DrawRectangle(x1, y1, buttonWidth, buttonHeight);
+						 	
+	memoryDC.SelectObject(wxNullBitmap);
+
+	// Draw the button mask		
+	if (!mask.Ok()) {
+		// A New Mask
+		mask.Create(720, 480, 32);
+
+		memoryDC.SelectObject(mask);	
+		
+		memoryDC.SetPen(*wxWHITE_PEN);
+		memoryDC.SetBrush(*wxWHITE_BRUSH);			
+		memoryDC.DrawRectangle(0, 0, 720, 480);
+	} else {
+		// Just select it for drawing
+		memoryDC.SelectObject(mask);	
+	}
+	
+	memoryDC.SetPen(wxPen(*wxGREEN, buttonOutlineWidth, wxSOLID));
+	memoryDC.SetBrush(*wxWHITE_BRUSH);				
+	memoryDC.DrawRectangle(x1, y1, buttonWidth, buttonHeight);
+
+	memoryDC.SelectObject(wxNullBitmap);
+}
+
 wxImage DVDMenuPage::GetHighlightMask()
 {
 	wxImage img = mask.ConvertToImage();	
@@ -303,13 +353,13 @@ DVDMenuPage DVDMenu::NestedGenerate(const wxString &htmlFilename, int width, int
 	//screen.DrawBitmap(htmlBitmap, 0, 0);
 		
 	if (htmlBitmap.GetWidth() > 720) {
-		wxImage htmlImage = htmlBitmap;
+		wxImage htmlImage = htmlBitmap.ConvertToImage();
 		wxSize targetSize = SmartResize(wxSize(htmlImage.GetWidth(), htmlImage.GetHeight()), wxSize(720, 0x8000));
 
 		wxImageResampler::Bicubic(htmlImage, targetSize.GetWidth(), targetSize.GetHeight());
 		//htmlImage.Rescale(targetSize.GetWidth(), targetSize.GetHeight());
 
-		htmlBitmap = htmlImage.ConvertToBitmap();
+		htmlBitmap = wxBitmap(htmlImage);
 	}
 
 	page.name = htmlFilename;
@@ -320,11 +370,12 @@ DVDMenuPage DVDMenu::NestedGenerate(const wxString &htmlFilename, int width, int
 
 	depth++;
 
-	if ((page.buttons.GetCount() > 0) && (depthLimit <= depth)) {
+	if ((page.buttons.GetCount() > 0) && (depthLimit >= depth)) {
 		// We have some links on this page,
 		for (size_t b = 0; b < page.buttons.GetCount(); b++) {
 			DVDMenuButton &button = page.buttons[b];
-			
+			page.DrawButtonOutline(button);
+
 			DVDMenuPage nestedPage = NestedGenerate(button.target, width, depth, depthLimit);
 			page.children.Add(nestedPage);
 		}
@@ -365,7 +416,7 @@ DVDMenuPage DVDMenu::NestedGenerate(const wxString &htmlFilename, int width, int
 			}
 			top -= 20; // we have a 20px overlap
 			
-			memoryDC.DrawBitmap(titleImage.ConvertToBitmap(), 0, top*-1);
+			memoryDC.DrawBitmap(titleImage, 0, top*-1);
 			
 			memoryDC.SelectObject(wxNullBitmap);
 		

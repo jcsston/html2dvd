@@ -89,7 +89,7 @@ float wxImageResampler::b3spline(float x)
 
 wxSize SmartResize(wxSize source, wxSize max)
 {
-	wxLogTrace(wxT("SmartResize(sourceX = %i, sourceY = %i, maxX = %i, maxY = %i)"), source.GetWidth(), source.GetHeight(), max.GetWidth(), max.GetHeight());
+	wxLogTrace(wxT("calls"), wxT("SmartResize(sourceX = %i, sourceY = %i, maxX = %i, maxY = %i)"), source.GetWidth(), source.GetHeight(), max.GetWidth(), max.GetHeight());
 
 	double dAspect;
 
